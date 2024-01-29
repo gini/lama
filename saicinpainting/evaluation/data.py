@@ -74,6 +74,9 @@ class InpaintingDataset(Dataset):
         if self.scale_factor is not None:
             result['image'] = scale_image(result['image'], self.scale_factor)
             result['mask'] = scale_image(result['mask'], self.scale_factor, interpolation=cv2.INTER_NEAREST)
+            # for resizing artifacts
+            kernel = np.ones((3, 3), np.uint8)
+            result['mask'][0] = cv2.dilate(result['mask'][0], kernel)
 
         if self.pad_out_to_modulo is not None and self.pad_out_to_modulo > 1:
             result['unpad_to_size'] = result['image'].shape[1:]
