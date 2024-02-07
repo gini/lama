@@ -8,6 +8,7 @@ model:
 dataset:
   kind: default
   img_suffix: .png
+  scale_factor: 1.0
   pad_out_to_modulo: 8
 
 device: cuda

@@ -85,6 +85,38 @@ class InpaintingDataset(Dataset):
 
         return result
 
+class InpaintingDatasetMaskless(Dataset):
+    def __init__(self, datadir, img_suffix='.jpg', pad_out_to_modulo=None, scale_factor=None):
+        self.datadir = datadir
+        self.img_filenames = sorted(list(glob.glob(os.path.join(self.datadir, '**', f'*{img_suffix}'), recursive=True)))
+        self.pad_out_to_modulo = pad_out_to_modulo
+        self.scale_factor = scale_factor
+        self.mask_color = (1., 0., 1.)
+
+    def __len__(self):
+        return len(self.img_filenames)
+
+    def __getitem__(self, i):
+        image = load_image(self.img_filenames[i], mode='RGB')
+        mask = np.all((np.transpose(image, (1, 2, 0)) == np.array(self.mask_color)), axis=2).astype('float32')
+        result = dict(image=image, mask=mask[None, ...])
+
+        if self.scale_factor is not None:
+            result['image'] = scale_image(result['image'], self.scale_factor)
+            result['mask'] = scale_image(result['mask'], self.scale_factor, interpolation=cv2.INTER_NEAREST)
+            # for resizing artifacts
+            kernel = np.ones((3, 3), np.uint8)
+            result['mask'][0] = cv2.dilate(result['mask'][0], kernel)
+
+        if self.pad_out_to_modulo is not None and self.pad_out_to_modulo > 1:
+            result['unpad_to_size'] = result['image'].shape[1:]
+            result['image'] = pad_img_to_modulo(result['image'], self.pad_out_to_modulo)
+            result['mask'] = pad_img_to_modulo(result['mask'], self.pad_out_to_modulo)
+        # plt.imsave("/home/dawars/programs/lama/image.png", result["image"].transpose(1, 2, 0))
+        # plt.imsave("/home/dawars/programs/lama/mask.png", result["mask"][0], cmap='gray')
+
+        return result
+
 class OurInpaintingDataset(Dataset):
     def __init__(self, datadir, img_suffix='.jpg', pad_out_to_modulo=None, scale_factor=None):
         self.datadir = datadir
