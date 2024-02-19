@@ -101,7 +101,7 @@ class InpaintingDatasetMaskless(Dataset):
         mask = np.all((np.transpose(image, (1, 2, 0)) == np.array(self.mask_color)), axis=2).astype('float32')
         result = dict(image=image, mask=mask[None, ...])
 
-        if self.scale_factor is not None:
+        if self.scale_factor is not None and self.scale_factor is not 1.0:
             result['image'] = scale_image(result['image'], self.scale_factor)
             result['mask'] = scale_image(result['mask'], self.scale_factor, interpolation=cv2.INTER_NEAREST)
             # for resizing artifacts
